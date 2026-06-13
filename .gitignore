@@ -1,0 +1,27 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Database
+*.db
+*.sqlite3
+
+# Large Model Weights (YOLO)
+# Commit best.pt and best_class.pt if you specifically want them in your repository.
+# Otherwise, it's recommended to ignore large binary files to keep git fast.
+*.pt
+
+# IDE / Editor config
+.vscode/
+.idea/
+
+# Local / OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIoT Smart Recycling Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">AIoT Smart Recycling Dashboard</h2>
+
+        <div class="d-flex justify-content-end mb-3">
+            <form action="/reset" method="POST" onsubmit="return confirm('정말 모든 수신 데이터를 초기화하시겠습니까?');">
+                <button type="submit" class="btn btn-danger btn-sm">DB 초기화 (테스트용)</button>
+            </form>
+        </div>
+
+        <div class="row text-center mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">현재 휴지통 내부 환경</h5>
+                        <p class="card-text fs-4">
+                            온도: <strong>{{ latest['temperature'] if latest else 'N/A' }}°C</strong> <br>
+                            습도: <strong>{{ latest['humidity'] if latest else 'N/A' }}%</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">분리수거 누적 현황</h5>
+                        <p class="card-text fs-5">
+                            플라스틱: {{ latest['plastic'] if latest else '0' }} | 
+                            종이: {{ latest['paper'] if latest else '0' }} <br>
+                            캔: {{ latest['can'] if latest else '0' }} | 
+                            유리병: {{ latest['bottle'] if latest else '0' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">최근 수신 로그</div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>시간</th><th>온도(°C)</th><th>습도(%)</th>
+                            <th>플라스틱</th><th>종이</th><th>캔</th><th>유리병</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                        <tr>
+                            <td>{{ row['timestamp'] }}</td><td>{{ row['temperature'] }}</td>
+                            <td>{{ row['humidity'] }}</td><td>{{ row['plastic'] }}</td>
+                            <td>{{ row['paper'] }}</td><td>{{ row['can'] }}</td>
+                            <td>{{ row['bottle'] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center">수신된 데이터가 없습니다.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

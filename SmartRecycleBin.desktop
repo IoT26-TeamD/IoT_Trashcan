@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=스마트 쓰레기통
+Name[en]=Smart Recycle Bin
+Comment=AIoT 스마트 쓰레기통 시스템 실행
+Comment[en]=Run AIoT Smart Recycle Bin system
+Exec=bash -c "cd %k/.. && bash run.sh"
+Icon=utilities-terminal
+Terminal=true
+Categories=Utility;
+StartupNotify=false
