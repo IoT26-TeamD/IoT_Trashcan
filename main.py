@@ -5,14 +5,14 @@
   - 초음파 센서 TRIG : GPIO 23
   - 초음파 센서 ECHO : GPIO 24
   - DHT11           : GPIO 4
-  - LED (캔)        : GPIO 17
-  - LED (플라스틱)  : GPIO 22
-  - LED (종이)      : GPIO 27
-  - LED (병)        : GPIO 5
+  - LED (캔/고철)   : GPIO 17
+  - LED (일반쓰레기): GPIO 22
+  - LED (유리병)    : GPIO 27
+  - LED (플라스틱)  : GPIO 5
 
 서버 API:
-  POST http://3.34.47.69/api/data
-  GET  http://3.34.47.69/api/stats
+  POST http://YOUR_SERVER_IP/api/data
+  GET  http://YOUR_SERVER_IP/api/stats
 모델: YOLOv26n Object Detection (best.pt)
 
 GUI: tkinter 기반, LCD 모니터에 카메라 화면 · 분류 결과 · 분리수거 방법 · 통계 표시
@@ -41,7 +41,7 @@ import board
 SERVER_URL      = "http://placeholder/api/data"
 STATS_URL       = "http://placeholder/api/stats"
 REQUEST_TIMEOUT = 1
-DETECT_DISTANCE = 0.20       # 20cm
+DETECT_DISTANCE = 0.18       # 18cm
 MODEL_PATH      = "./best.pt"
 CONF_THRESHOLD  = 0.4
 DHT_INTERVAL    = 2          # DHT11 권장 2초
@@ -67,31 +67,22 @@ FG_PURPLE = "#bc8cff"
 
 # ── Recycling Info ──
 RECYCLE_INFO = {
-    "can": {
-        "name": "Can",
+    "metal": {
+        "name": "Metal / Can",
         "color": FG_ORANGE,
         "tips": [
             "1. Empty contents and rinse with water",
             "2. Crush to reduce volume",
-            "3. Place in the CAN recycling bin",
+            "3. Place in the METAL recycling bin",
         ],
     },
-    "plastic": {
-        "name": "Plastic",
-        "color": FG_BLUE,
+    "general": {
+        "name": "General Waste",
+        "color": FG_RED,
         "tips": [
-            "1. Remove labels and caps",
-            "2. Empty contents and rinse",
-            "3. Compress and place in PLASTIC bin",
-        ],
-    },
-    "paper": {
-        "name": "Paper",
-        "color": FG_GREEN,
-        "tips": [
-            "1. Remove tape and foreign materials",
-            "2. Coated paper goes to general waste",
-            "3. Fold and place in PAPER bin",
+            "1. Remove any recyclable parts",
+            "2. Place in the GENERAL waste bin",
+            "3. Do not mix with recyclables",
         ],
     },
     "bottle": {
@@ -103,15 +94,24 @@ RECYCLE_INFO = {
             "3. Sort by color into GLASS bin",
         ],
     },
+    "plastic": {
+        "name": "Plastic",
+        "color": FG_BLUE,
+        "tips": [
+            "1. Remove labels and caps",
+            "2. Empty contents and rinse",
+            "3. Compress and place in PLASTIC bin",
+        ],
+    },
 }
 
 # ══════════════════════════════════════════════
 # 2. 하드웨어 초기화
 # ══════════════════════════════════════════════
 leds = {
-    "can":     LED(17),
+    "metal":   LED(17),
     "plastic": LED(22),
-    "paper":   LED(27),
+    "general": LED(27),
     "bottle":  LED(5),
 }
 
@@ -132,9 +132,9 @@ class State:
     temperature: float | None = None
     humidity:    float | None = None
     # POST에 사용할 로컬 누적 카운터
-    counts = {"plastic": 0, "paper": 0, "can": 0, "bottle": 0}
+    counts = {"metal": 0, "general": 0, "bottle": 0, "plastic": 0}
     # 서버에서 가져온 표시용 통계
-    display_stats = {"plastic": 0, "paper": 0, "can": 0, "bottle": 0}
+    display_stats = {"metal": 0, "general": 0, "bottle": 0, "plastic": 0}
 
 
 # ══════════════════════════════════════════════
@@ -276,7 +276,7 @@ class SmartRecycleBinApp:
         tk.Label(stats_l, text="Total Recycled (Server)", font=self.f_small,
                  fg=FG_DIM, bg=BG_HEADER).pack(anchor="w")
         self.lbl_stats = tk.Label(stats_l,
-                                  text="Can: 0   Plastic: 0   Paper: 0   Bottle: 0",
+                                  text="Metal: 0   General: 0   Bottle: 0   Plastic: 0",
                                   font=self.f_med, fg=FG_WHITE, bg=BG_HEADER)
         self.lbl_stats.pack(anchor="w")
 
@@ -397,7 +397,7 @@ class SmartRecycleBinApp:
     # ──────────────────────────────────────────
     def _send_to_server(self, detected_class: str):
         with State.lock:
-            key = detected_class if detected_class in State.counts else "bottle"
+            key = detected_class if detected_class in State.counts else "general"
             State.counts[key] += 1
             payload = {
                 "temperature": State.temperature,
@@ -480,10 +480,10 @@ class SmartRecycleBinApp:
                     data = resp.json()
                     with State.lock:
                         State.display_stats = {
-                            "can":     data.get("can", 0),
-                            "plastic": data.get("plastic", 0),
-                            "paper":   data.get("paper", 0),
+                            "metal":   data.get("metal", 0),
+                            "general": data.get("general", 0),
                             "bottle":  data.get("bottle", 0),
+                            "plastic": data.get("plastic", 0),
                         }
                         # 첫 실행 시 로컬 카운터를 서버 값으로 동기화
                         if first:
@@ -498,8 +498,8 @@ class SmartRecycleBinApp:
         with State.lock:
             s = State.display_stats
         self.lbl_stats.configure(
-            text=f"Can: {s['can']}   Plastic: {s['plastic']}   "
-                 f"Paper: {s['paper']}   Bottle: {s['bottle']}"
+            text=f"Metal: {s['metal']}   General: {s['general']}   "
+                 f"Bottle: {s['bottle']}   Plastic: {s['plastic']}"
         )
 
     # ──────────────────────────────────────────

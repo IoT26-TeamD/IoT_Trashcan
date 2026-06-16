@@ -9,10 +9,10 @@ import time
 # 1. 핀 설정 (BCM 기준)
 # ──────────────────────────────────────────────
 leds = {
-    "can":     LED(17),
-    "plastic": LED(22),
-    "paper":   LED(27),
-    "bottle":  LED(5),
+    "metal":   LED(17),
+    "general": LED(22),
+    "bottle":  LED(27),
+    "plastic": LED(5),
 }
 
 def turn_off_all():

@@ -8,33 +8,16 @@ DB_NAME = 'iot_data.db'
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    
-    # Check if 'bottle' column exists
-    try:
-        c.execute("SELECT bottle FROM sensor_data LIMIT 1")
-    except sqlite3.OperationalError:
-        # If 'bottle' column is missing (or table doesn't exist)
-        try:
-            # Try to migrate general to bottle
-            c.execute("ALTER TABLE sensor_data RENAME COLUMN general TO bottle")
-            conn.commit()
-            print("[DB] Migrated general column to bottle successfully.")
-        except sqlite3.OperationalError:
-            # If migration fails (e.g. SQLite version too old, or no table at all), drop and recreate
-            c.execute("DROP TABLE IF EXISTS sensor_data")
-            conn.commit()
-            print("[DB] Dropped old table to recreate with new schema.")
-
     c.execute('''
         CREATE TABLE IF NOT EXISTS sensor_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
             temperature REAL,
             humidity REAL,
-            plastic INT,
-            paper INT,
-            can INT,
-            bottle INT
+            metal INT,
+            general INT,
+            bottle INT,
+            plastic INT
         )
     ''')
     conn.commit()
@@ -47,18 +30,18 @@ def receive_data():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     temp = data.get('temperature', 0)
     humidity = data.get('humidity', 0)
-    plastic = data.get('plastic', 0)
-    paper = data.get('paper', 0)
-    can = data.get('can', 0)
+    metal = data.get('metal', 0)
+    general = data.get('general', 0)
     bottle = data.get('bottle', 0)
+    plastic = data.get('plastic', 0)
 
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('''
         INSERT INTO sensor_data 
-        (timestamp, temperature, humidity, plastic, paper, can, bottle) 
+        (timestamp, temperature, humidity, metal, general, bottle, plastic) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (timestamp, temp, humidity, plastic, paper, can, bottle))
+    ''', (timestamp, temp, humidity, metal, general, bottle, plastic))
     conn.commit()
     conn.close()
 
@@ -91,15 +74,15 @@ def get_stats():
         return jsonify({
             "temperature": row["temperature"],
             "humidity":    row["humidity"],
-            "plastic":     row["plastic"],
-            "paper":       row["paper"],
-            "can":         row["can"],
+            "metal":       row["metal"],
+            "general":     row["general"],
             "bottle":      row["bottle"],
+            "plastic":     row["plastic"],
             "timestamp":   row["timestamp"],
         })
     return jsonify({
         "temperature": 0, "humidity": 0,
-        "plastic": 0, "paper": 0, "can": 0, "bottle": 0,
+        "metal": 0, "general": 0, "bottle": 0, "plastic": 0,
         "timestamp": None,
     })
 
